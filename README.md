@@ -1,47 +1,55 @@
-# RoboTech RAG
+# Asistente Industrial por voz - RAG
 
-Sistema de Retrieval Augmented Generation (RAG) especializado para consulta de manuales técnicos de robótica e industrial.
+Sistema de Retrieval Augmented Generation (RAG) con interacción por voz para consulta de manuales técnicos de robótica e industrial.
 
 ## ¿Qué es?
 
-**RoboTech RAG** es un sistema de inteligencia artificial local que permite ingestar, indexar y consultar manuales técnicos de robots y equipos industriales de forma inteligente. Utiliza modelos de lenguaje locales (Ollama) para procesar documentos PDF y responder preguntas técnicas específicas.
+**Asistente Industrial por voz** es un sistema de inteligencia artificial local que permite ingestar, indexar y consultar manuales técnicos de equipos industriales de forma inteligente mediante voz. Utiliza:
+
+- **STT (Speech-to-Text)**: Faster-Whisper para reconocer voz en español
+- **RAG**: Modelos de lenguaje locales (Ollama) para procesar documentos PDF y responder preguntas
+- **TTS (Text-to-Speech)**: pyttsx3 para responder con voz sintetizada
 
 ## ¿Para qué sirve?
 
+- **Consulta por voz**: Habla directamente con el asistente sobre tus manuales técnicos
 - **Ingestión de manuales**: Extrae contenido de PDFs incluyendo texto, tablas y diagramas técnicos
-- **Indexación semántica**: Almacena el contenido en una base de datos vectorial para búsqueda rápida
-- **Consulta inteligente**: Responde preguntas técnicas usando el contexto de los manuales cargados
-- **Procesamiento de imágenes**: Describe diagramas técnicos, esquemas de cableado y diagramas Ladder/ST mediante visión artificial local
+- **Indexación semántica**: Almacena el contenido en ChromaDB para búsqueda rápida
+- **Respuesta por voz**: El asistente responde hablando automáticamente
+- **Interfaz web**: Interfaz Gradio accesible desde el navegador
 
 ## Arquitectura
 
-El sistema está compuesto por 4 agentes:
-
 ```
-RoboTechRAG
-├── IngestionAgent    → Extrae contenido de PDFs (texto + imágenes)
-├── IndexerAgent      → Indexa contenido en ChromaDB (base vectorial)
-├── ConsultantAgent   → Busca información relevante por similitud semántica
-└── GeneratorAgent    → Genera respuestas usando Ollama local
+Asistente Industrial
+├── STT (Faster-Whisper)  → Reconocimiento de voz en español
+├── RAG System            → Consulta inteligente de manuales
+│   ├── IngestionAgent   → Extracción de PDF
+│   ├── IndexerAgent     → Indexación en ChromaDB
+│   ├── ConsultantAgent  → Búsqueda semántica
+│   └── GeneratorAgent   → Generación con Ollama
+└── TTS (pyttsx3)        → Síntesis de voz en español
 ```
 
 ### Tecnologías utilizadas
 
-- **Ollama**: Modelos LLM locales (Llama 3.2, LLaVA)
-- **ChromaDB**: Base de datos vectorial para búsqueda semántica
-- **Sentence-Transformers**: Modelo de embeddings (all-MiniLM-L6-v2)
-- **PyMuPDF**: Extracción de contenido PDF
-- **Python**: Lenguaje principal
+- **Faster-Whisper**: Reconocimiento de voz (modelo tiny, CPU)
+- **Ollama**: Modelos LLM locales (Llama 3.2)
+- **ChromaDB**: Base de datos vectorial
+- **Sentence-Transformers**: Embeddings (all-MiniLM-L6-v2)
+- **Gradio**: Interfaz web
+- **pyttsx3**: Síntesis de voz
+- **PyMuPDF**: Extracción de PDF
 
 ## Requisitos previos
 
 1. **Ollama instalado y ejecutándose**
    - Descarga: https://ollama.com
-   - Modelos necesarios: `llama3.2` y `llava`
+   - Modelo necesario: `llama3.2`
 
 2. **Python 3.11+**
 
-3. **Dependencies**:
+3. **Dependencias**:
    ```
    pip install -r requirements.txt
    ```
@@ -50,15 +58,14 @@ RoboTechRAG
 
 1. Clona el repositorio:
    ```bash
-   git clone https://github.com/Crojor88/RoboTech-RAG.git
-   cd RoboTech-RAG
+   git clone https://github.com/Crojor88/Asistente-Industrial-por-voz-RAG.git
+   cd Asistente-Industrial-por-voz-RAG
    ```
 
-2. Crea un entorno virtual (opcional pero recomendado):
+2. Crea un entorno virtual:
    ```bash
    python -m venv venv
    venv\Scripts\activate  # Windows
-   # source venv/bin/activate  # Linux/Mac
    ```
 
 3. Instala las dependencias:
@@ -66,30 +73,28 @@ RoboTechRAG
    pip install -r requirements.txt
    ```
 
-4. Configura el archivo `.env` (copia de `.env.example`):
-   ```
-   # Por ahora no requiere API keys (usa Ollama local)
-   ```
-
-5. Asegúrate de tener Ollama instalado y ejecutándose:
+4. Asegúrate de tener Ollama ejecutándose:
    ```bash
    ollama serve
    ```
 
 ## Uso
 
-### Inicializar el sistema
+### Iniciar la interfaz web
+
+```bash
+python app.py
+```
+
+Accede a `http://127.0.0.1:7860` en tu navegador.
+
+### Ingestar manuales
 
 ```python
 from src.main import RoboTechRAG
 
-# Por defecto usa llama3.2 (texto) y llava (imágenes)
 rag = RoboTechRAG()
-```
 
-### Ingestar un manual
-
-```python
 # Ingestar un manual PDF
 rag.ingest_manual(
     pdf_path="data/manuals/mi_manual.pdf",
@@ -98,74 +103,42 @@ rag.ingest_manual(
 )
 ```
 
-### Realizar consultas
-
-```python
-# Preguntar al sistema
-respuesta = rag.ask("¿Cuál es el voltaje de alimentación de la CPU 1214C?")
-print(respuesta)
-```
-
-### Filtrar por fabricante
-
-```python
-# Buscar solo en manuales de un fabricante específico
-results = consultant.search(
-    "¿Cómo conectar un sensor PNP?",
-    manufacturer="Siemens"
-)
+O usa el script de carga masiva:
+```bash
+python bulk_ingest.py
 ```
 
 ## Estructura del proyecto
 
 ```
-Sistema RAG/
+Asistente Industrial/
+├── app.py                    # Interfaz web Gradio con voz
+├── bulk_ingest.py            # Carga masiva de PDFs
+├── test_tts.py              # Pruebas de síntesis de voz
+├── test_rag.py              # Pruebas del sistema RAG
 ├── src/
 │   ├── main.py              # Clase principal RoboTechRAG
 │   └── agents/
-│       ├── ingestion.py      # Extracción de PDF
-│       ├── indexer.py       # Indexación en ChromaDB
+│       ├── ingestion.py     # Extracción de PDF
+│       ├── indexer.py       # Indexación ChromaDB
 │       ├── consultant.py    # Búsqueda semántica
 │       └── generator.py     # Generación de respuestas
 ├── data/
-│   ├── db/                  # Base de datos ChromaDB
+│   ├── db/                  # ChromaDB
 │   └── manuals/             # PDFs de manuales
-├── Informacion/             # Documentación del sistema
-├── requirements.txt         # Dependencias Python
-└── test_rag.py              # Pruebas del sistema
+└── requirements.txt
 ```
 
-## Ejemplo completo
+## Manuales incluidos
 
-```python
-from src.main import RoboTechRAG
-
-# Inicializar
-rag = RoboTechRAG()
-
-# Cargar un manual
-rag.ingest_manual(
-    "data/manuals/s7-1200_manual.pdf",
-    "Siemens",
-    "S7-1200"
-)
-
-# Realizar preguntas técnicas
-print(rag.ask("¿Cómo programo un temporizador en TIA Portal?"))
-print(rag.ask("¿Qué tipo de fuente necesito para el PLC 1214C?"))
-```
+- Siemens S7-1200
+- Schneider GV2
+- Schneider iID
+- Schneider IC60N
 
 ## Limitaciones
 
 - Requiere Ollama ejecutándose localmente
-- Los primeros arranques pueden tardar en descargar modelos (~2-3 GB cada uno)
-- El rendimiento depende del hardware disponible (RAM/GPU)
+- Los primeros arranques pueden tardar en descargar modelos
+- TTS usa voces del sistema (Windows)
 - Solo soporta PDFs por ahora
-
-## Licencia
-
-MIT License
-
-## Autor
-
-Desarrollado como proyecto de automatización industrial con IA.
